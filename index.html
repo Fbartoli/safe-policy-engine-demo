@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safe Policy Engine - Demo</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e14;
+      --bg-secondary: #12171e;
+      --bg-tertiary: #1a2028;
+      --bg-elevated: #222a35;
+      --border-primary: #2d3748;
+      --border-secondary: #3d4a5c;
+      --text-primary: #f7fafc;
+      --text-secondary: #a0aec0;
+      --text-muted: #718096;
+      --accent-green: #48bb78;
+      --accent-green-dim: rgba(72, 187, 120, 0.15);
+      --accent-blue: #4299e1;
+      --accent-blue-dim: rgba(66, 153, 225, 0.15);
+      --accent-yellow: #ecc94b;
+      --accent-yellow-dim: rgba(236, 201, 75, 0.15);
+      --accent-red: #fc8181;
+      --accent-red-dim: rgba(252, 129, 129, 0.15);
+      --accent-purple: #9f7aea;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      min-height: 100vh;
+      padding: 24px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-primary);
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #48bb78, #38a169);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    }
+    h1 { font-size: 22px; color: var(--text-primary); font-weight: 600; letter-spacing: -0.02em; }
+    .subtitle { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-green { background: var(--accent-green-dim); color: var(--accent-green); }
+    .badge-yellow { background: var(--accent-yellow-dim); color: var(--accent-yellow); }
+    .badge-red { background: var(--accent-red-dim); color: var(--accent-red); }
+    .badge-blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .list-item {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-primary);
+      border-radius: 8px;
+      padding: 14px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .list-item:hover { border-color: var(--border-secondary); background: var(--bg-elevated); }
+    .list-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .list-item-title { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+    .members {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .member {
+      background: var(--bg-elevated);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-primary);
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--bg-elevated);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+    .progress-green { background: linear-gradient(90deg, #38a169, #48bb78); }
+    .progress-yellow { background: linear-gradient(90deg, #d69e2e, #ecc94b); }
+    .progress-red { background: linear-gradient(90deg, #e53e3e, #fc8181); }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .address {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .tx-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .tx-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .tx-icon-send { background: var(--accent-blue-dim); }
+    .tx-icon-swap { background: rgba(159, 122, 234, 0.15); }
+    .tx-info { flex: 1; }
+    .tx-amount { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+    .tx-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .countdown {
+      text-align: right;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .countdown-time {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      letter-spacing: 0.02em;
+    }
+    .sanction-reason {
+      font-size: 11px;
+      color: var(--accent-red);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-primary);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 13px; color: var(--text-secondary); }
+    .toggle {
+      width: 44px;
+      height: 24px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: 1px solid var(--border-primary);
+    }
+    .toggle.active { background: var(--accent-green); border-color: var(--accent-green); }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .toggle.active::after { left: 22px; }
+    .status-bar {
+      display: flex;
+      gap: 32px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: 12px;
+      padding: 20px 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .status-item { text-align: center; min-width: 80px; }
+    .status-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .status-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: linear-gradient(135deg, #48bb78, #38a169); color: #fff; }
+    .btn-danger { background: linear-gradient(135deg, #fc8181, #e53e3e); color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-secondary);
+      color: var(--text-secondary);
+    }
+    .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .actions { display: flex; gap: 8px; margin-top: 12px; }
+    .full-width { grid-column: 1 / -1; }
+    .permissions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .permission {
+      background: var(--accent-blue-dim);
+      color: var(--accent-blue);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .header-right { display: flex; align-items: center; }
+    .network-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-primary);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .network-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border-bottom: 1px solid #30363d;
+    }
+    .modal-title { font-size: 18px; font-weight: 600; color: #f0f6fc; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #8b949e;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: #f0f6fc; }
+    .modal-body { padding: 20px; }
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding: 20px;
+      border-top: 1px solid #30363d;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #c9d1d9;
+      margin-bottom: 8px;
+    }
+    .form-hint {
+      font-size: 12px;
+      color: #8b949e;
+      margin-top: 4px;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .chip-input {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      min-height: 44px;
+    }
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #21262d;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .chip-remove {
+      background: none;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+    }
+    .chip-remove:hover { color: #f85149; }
+    .chip-add {
+      background: none;
+      border: 1px dashed #30363d;
+      color: #8b949e;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .chip-add:hover { border-color: #58a6ff; color: #58a6ff; }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f0f6fc;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #21262d;
+    }
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .config-item {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .config-item-label {
+      font-size: 12px;
+      color: #8b949e;
+      margin-bottom: 4px;
+    }
+    .config-item-value {
+      font-size: 14px;
+      color: #f0f6fc;
+      font-weight: 500;
+    }
+    .inline-input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #30363d;
+      color: #f0f6fc;
+      font-size: 14px;
+      font-weight: 500;
+      width: 100%;
+      padding: 2px 0;
+    }
+    .inline-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #30363d;
+    }
+    .tab {
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      color: #8b949e;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .tab:hover { color: #c9d1d9; }
+    .tab.active {
+      color: #f0f6fc;
+      border-bottom-color: #f78166;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .alert-info {
+      background: #388bfd22;
+      border: 1px solid #388bfd44;
+      color: #58a6ff;
+    }
+    .alert-warning {
+      background: #9e6a0322;
+      border: 1px solid #9e6a0344;
+      color: #d29922;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-left">
+        <div class="logo">🛡</div>
+        <div>
+          <h1>Safe Policy Engine</h1>
+          <p class="subtitle">Role-based access control with compliance guardrails</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="network-badge">
+          <span class="network-dot"></span>
+          Sepolia Testnet
+        </div>
+        <button class="btn btn-outline" style="margin-left: 12px;">Connect Wallet</button>
+      </div>
+    </header>
+
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-value">5</div>
+        <div class="status-label">Safe Signers</div>
+      </div>
+      <div class="status-item">
+        <div class="status-value">3</div>
+        <div class="status-label">Active Roles</div>
+      </div>
+      <div class="status-item">
+        <div class="status-value">2</div>
+        <div class="status-label">Queued Txns</div>
+      </div>
+      <div class="status-item">
+        <div class="status-value">4</div>
+        <div class="status-label">Sanctioned Addrs</div>
+      </div>
+      <div class="status-item">
+        <div class="status-value" style="color: #3fb950;">Active</div>
+        <div class="status-label">Guard Status</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Roles Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Roles & Members</span>
+          <button class="btn btn-outline" onclick="openModal('addRoleModal')">+ Add Role</button>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <div class="list-item-header">
+              <span class="list-item-title">Admin</span>
+              <span class="badge badge-red">Full Access</span>
+            </div>
+            <div class="members">
+              <span class="member">0x1234...abcd</span>
+              <span class="member">0x5678...efgh</span>
+            </div>
+            <div class="permissions">
+              <span class="permission">All Targets</span>
+              <span class="permission">All Functions</span>
+              <span class="permission">No Limit</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="list-item-header">
+              <span class="list-item-title">Portfolio Manager</span>
+              <span class="badge badge-blue">DeFi Access</span>
+            </div>
+            <div class="members">
+              <span class="member">0xaaaa...1111</span>
+              <span class="member">0xbbbb...2222</span>
+            </div>
+            <div class="permissions">
+              <span class="permission">Uniswap</span>
+              <span class="permission">1inch</span>
+              <span class="permission">swap()</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="list-item-header">
+              <span class="list-item-title">Operations</span>
+              <span class="badge badge-green">Transfers</span>
+            </div>
+            <div class="members">
+              <span class="member">0xcccc...3333</span>
+            </div>
+            <div class="permissions">
+              <span class="permission">USDC</span>
+              <span class="permission">USDT</span>
+              <span class="permission">transfer()</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spending Limits Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Spending Limits</span>
+          <span class="badge badge-green">Healthy</span>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <div class="list-item-header">
+              <span class="list-item-title">Portfolio Manager</span>
+              <span style="color: #3fb950;">$127,500 / $500,000</span>
+            </div>
+            <div class="stat-row">
+              <span>Daily limit</span>
+              <span>Resets in 14h 23m</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill progress-green" style="width: 25.5%"></div>
+            </div>
+            <div class="stat-row" style="margin-top: 12px;">
+              <span>Per-transaction max</span>
+              <span>$100,000</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="list-item-header">
+              <span class="list-item-title">Operations</span>
+              <span style="color: #d29922;">$42,000 / $50,000</span>
+            </div>
+            <div class="stat-row">
+              <span>Daily limit</span>
+              <span>Resets in 14h 23m</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill progress-yellow" style="width: 84%"></div>
+            </div>
+            <div class="stat-row" style="margin-top: 12px;">
+              <span>Per-transaction max</span>
+              <span>$10,000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Queue Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Transaction Queue</span>
+          <span class="badge badge-yellow">2 Pending</span>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <div class="tx-item">
+              <div class="tx-icon tx-icon-swap">🔄</div>
+              <div class="tx-info">
+                <div class="tx-amount">Swap 500 ETH → USDC</div>
+                <div class="tx-desc">via Uniswap V3 • Portfolio Manager</div>
+              </div>
+              <div class="countdown">
+                <div class="countdown-time" id="countdown1">2:45:12</div>
+                <div>remaining</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-outline">View Details</button>
+              <button class="btn btn-danger">Veto</button>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="tx-item">
+              <div class="tx-icon tx-icon-send">↗</div>
+              <div class="tx-info">
+                <div class="tx-amount">Transfer 1.2M USDC</div>
+                <div class="tx-desc">to 0x9876...wxyz • Admin</div>
+              </div>
+              <div class="countdown">
+                <div class="countdown-time" id="countdown2">3:58:47</div>
+                <div>remaining</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-outline">View Details</button>
+              <button class="btn btn-danger">Veto</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sanctioned Addresses Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Sanctioned Addresses</span>
+          <button class="btn btn-outline" onclick="openModal('addSanctionModal')">+ Add</button>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <div class="address">0xd90e2f925da726b50c4ed8d0fb90ad053324f31b</div>
+            <div class="sanction-reason">OFAC SDN List - Tornado Cash</div>
+          </div>
+          <div class="list-item">
+            <div class="address">0x7f367cc41522ce07553e823bf3be79a889debe1b</div>
+            <div class="sanction-reason">OFAC SDN List - Lazarus Group</div>
+          </div>
+          <div class="list-item">
+            <div class="address">0x8589427373d6d84e98730d7795d8f6f8731fda16</div>
+            <div class="sanction-reason">Internal Blocklist - Suspected Fraud</div>
+          </div>
+          <div class="list-item">
+            <div class="address">0x722122df12d4e14e13ac3b6895a86e84145b6967</div>
+            <div class="sanction-reason">OFAC SDN List - Tornado Cash Router</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Guard Settings Card (Expanded) -->
+      <div class="card full-width">
+        <div class="card-header">
+          <span class="card-title">Global Guard Configuration</span>
+          <button class="btn btn-primary">Save Changes</button>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('general')">General</button>
+          <button class="tab" onclick="switchTab('delay')">Delay Module</button>
+          <button class="tab" onclick="switchTab('limits')">Global Limits</button>
+          <button class="tab" onclick="switchTab('advanced')">Advanced</button>
+        </div>
+
+        <!-- General Tab -->
+        <div id="tab-general" class="tab-content active">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div>
+              <div class="section-title">Transaction Controls</div>
+              <div class="toggle-row">
+                <span class="toggle-label">Block delegate calls</span>
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Block self-destruct operations</span>
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Require whitelisted recipients</span>
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Allow contract creation</span>
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+            <div>
+              <div class="section-title">Compliance & Audit</div>
+              <div class="toggle-row">
+                <span class="toggle-label">Enforce sanctions list</span>
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Emit audit events</span>
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Log failed transactions</span>
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Emergency pause</span>
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delay Module Tab -->
+        <div id="tab-delay" class="tab-content">
+          <div class="alert alert-info">
+            The Delay Module queues high-value transactions for a configurable period, allowing time for review and veto before execution.
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div>
+              <div class="section-title">Delay Settings</div>
+              <div class="toggle-row">
+                <span class="toggle-label">Enable delay for high-value txns</span>
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="form-group" style="margin-top: 16px;">
+                <label class="form-label">Default Delay Period</label>
+                <select class="form-select">
+                  <option>1 hour</option>
+                  <option>2 hours</option>
+                  <option selected>4 hours</option>
+                  <option>8 hours</option>
+                  <option>24 hours</option>
+                  <option>48 hours</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cooldown Between Executions</label>
+                <select class="form-select">
+                  <option>None</option>
+                  <option selected>5 minutes</option>
+                  <option>15 minutes</option>
+                  <option>1 hour</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <div class="section-title">Value Thresholds</div>
+              <div class="config-grid">
+                <div class="config-item">
+                  <div class="config-item-label">ETH Threshold</div>
+                  <input class="inline-input" type="text" value="100 ETH">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">USD Threshold</div>
+                  <input class="inline-input" type="text" value="$1,000,000">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">Max Queue Size</div>
+                  <input class="inline-input" type="text" value="10 txns">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">Expiration</div>
+                  <input class="inline-input" type="text" value="7 days">
+                </div>
+              </div>
+              <div class="form-group" style="margin-top: 16px;">
+                <label class="form-label">Veto Authorities</label>
+                <div class="chip-input">
+                  <span class="chip">0x1234...abcd (Admin) <button class="chip-remove">&times;</button></span>
+                  <span class="chip">0x5678...efgh (Admin) <button class="chip-remove">&times;</button></span>
+                  <button class="chip-add">+ Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Limits Tab -->
+        <div id="tab-limits" class="tab-content">
+          <div class="alert alert-warning">
+            Global limits apply across ALL roles. Individual role limits cannot exceed these values.
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div>
+              <div class="section-title">Per-Transaction Limits</div>
+              <div class="config-grid">
+                <div class="config-item">
+                  <div class="config-item-label">Max ETH per tx</div>
+                  <input class="inline-input" type="text" value="500 ETH">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">Max USD per tx</div>
+                  <input class="inline-input" type="text" value="$2,000,000">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">Max ERC20 per tx</div>
+                  <input class="inline-input" type="text" value="Unlimited">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">Max gas price</div>
+                  <input class="inline-input" type="text" value="500 gwei">
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="section-title">Aggregate Limits</div>
+              <div class="config-grid">
+                <div class="config-item">
+                  <div class="config-item-label">Daily outflow cap</div>
+                  <input class="inline-input" type="text" value="$5,000,000">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">Weekly outflow cap</div>
+                  <input class="inline-input" type="text" value="$20,000,000">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">Max txns per day</div>
+                  <input class="inline-input" type="text" value="100">
+                </div>
+                <div class="config-item">
+                  <div class="config-item-label">Rate limit window</div>
+                  <input class="inline-input" type="text" value="1 hour">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Tab -->
+        <div id="tab-advanced" class="tab-content">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div>
+              <div class="section-title">Contract Addresses</div>
+              <div class="form-group">
+                <label class="form-label">Safe Address</label>
+                <input class="form-input" type="text" value="0x1234567890abcdef1234567890abcdef12345678" style="font-family: monospace; font-size: 12px;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Guard Contract</label>
+                <input class="form-input" type="text" value="0xabcdef1234567890abcdef1234567890abcdef12" style="font-family: monospace; font-size: 12px;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Roles Module</label>
+                <input class="form-input" type="text" value="0x567890abcdef1234567890abcdef123456789012" style="font-family: monospace; font-size: 12px;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Delay Module</label>
+                <input class="form-input" type="text" value="0x890abcdef1234567890abcdef12345678901234" style="font-family: monospace; font-size: 12px;">
+              </div>
+            </div>
+            <div>
+              <div class="section-title">Oracle & Pricing</div>
+              <div class="form-group">
+                <label class="form-label">Price Oracle</label>
+                <select class="form-select">
+                  <option selected>Chainlink (Recommended)</option>
+                  <option>Uniswap TWAP</option>
+                  <option>Custom Oracle</option>
+                  <option>Disabled</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Stale Price Threshold</label>
+                <select class="form-select">
+                  <option>30 minutes</option>
+                  <option selected>1 hour</option>
+                  <option>4 hours</option>
+                  <option>24 hours</option>
+                </select>
+              </div>
+              <div class="section-title" style="margin-top: 24px;">Danger Zone</div>
+              <div class="toggle-row" style="border-color: #da363333;">
+                <span class="toggle-label" style="color: #f85149;">Bypass guard (DANGEROUS)</span>
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="toggle-row" style="border-color: #da363333;">
+                <span class="toggle-label" style="color: #f85149;">Allow arbitrary calls</span>
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Card -->
+      <div class="card full-width">
+        <div class="card-header">
+          <span class="card-title">Recent Activity</span>
+          <button class="btn btn-outline">View All</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="border-bottom: 1px solid #30363d; color: #8b949e;">
+                <th style="text-align: left; padding: 12px 8px;">Time</th>
+                <th style="text-align: left; padding: 12px 8px;">Action</th>
+                <th style="text-align: left; padding: 12px 8px;">Actor</th>
+                <th style="text-align: left; padding: 12px 8px;">Details</th>
+                <th style="text-align: left; padding: 12px 8px;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid #21262d;">
+                <td style="padding: 12px 8px; color: #8b949e;">2 min ago</td>
+                <td style="padding: 12px 8px;">Transfer USDC</td>
+                <td style="padding: 12px 8px;"><span class="member">Operations</span></td>
+                <td style="padding: 12px 8px;">8,000 USDC to 0xdef0...7890</td>
+                <td style="padding: 12px 8px;"><span class="badge badge-green">Executed</span></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #21262d;">
+                <td style="padding: 12px 8px; color: #8b949e;">15 min ago</td>
+                <td style="padding: 12px 8px;">Swap ETH/USDC</td>
+                <td style="padding: 12px 8px;"><span class="member">Portfolio Mgr</span></td>
+                <td style="padding: 12px 8px;">50 ETH → 95,000 USDC</td>
+                <td style="padding: 12px 8px;"><span class="badge badge-green">Executed</span></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #21262d;">
+                <td style="padding: 12px 8px; color: #8b949e;">1 hour ago</td>
+                <td style="padding: 12px 8px;">Transfer ETH</td>
+                <td style="padding: 12px 8px;"><span class="member">Operations</span></td>
+                <td style="padding: 12px 8px;">5 ETH to 0xd90e...4f31</td>
+                <td style="padding: 12px 8px;"><span class="badge badge-red">Blocked</span></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #21262d;">
+                <td style="padding: 12px 8px; color: #8b949e;">2 hours ago</td>
+                <td style="padding: 12px 8px;">Add Sanction</td>
+                <td style="padding: 12px 8px;"><span class="member">Admin</span></td>
+                <td style="padding: 12px 8px;">0x8589...da16 added to blocklist</td>
+                <td style="padding: 12px 8px;"><span class="badge badge-blue">Config</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 8px; color: #8b949e;">3 hours ago</td>
+                <td style="padding: 12px 8px;">Queued Txn</td>
+                <td style="padding: 12px 8px;"><span class="member">Admin</span></td>
+                <td style="padding: 12px 8px;">1.2M USDC transfer (delay: 4h)</td>
+                <td style="padding: 12px 8px;"><span class="badge badge-yellow">Pending</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <footer style="text-align: center; padding: 40px 0 20px; color: #484f58; font-size: 12px;">
+      Safe Policy Engine Demo • Built with Zodiac Roles v2 & Safe Guard
+    </footer>
+  </div>
+
+  <!-- Add Role Modal -->
+  <div id="addRoleModal" class="modal-overlay" onclick="if(event.target===this)closeModal('addRoleModal')">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Create New Role</span>
+        <button class="modal-close" onclick="closeModal('addRoleModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Role Name</label>
+          <input class="form-input" type="text" placeholder="e.g., Treasury Manager">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Role Type</label>
+            <select class="form-select">
+              <option>Custom</option>
+              <option>Admin (Full Access)</option>
+              <option>DeFi Operator</option>
+              <option>Treasury</option>
+              <option>Read Only</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Badge Color</label>
+            <select class="form-select">
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="yellow">Yellow</option>
+              <option value="red">Red</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Members</label>
+          <div class="chip-input" id="memberChips">
+            <button class="chip-add" onclick="addMemberChip()">+ Add Member Address</button>
+          </div>
+          <div class="form-hint">Enter Ethereum addresses of role members</div>
+        </div>
+
+        <div class="section-title" style="margin-top: 24px;">Permissions</div>
+
+        <div class="form-group">
+          <label class="form-label">Allowed Target Contracts</label>
+          <div class="chip-input">
+            <span class="chip">Uniswap V3 Router <button class="chip-remove">&times;</button></span>
+            <button class="chip-add">+ Add Target</button>
+          </div>
+          <div class="form-hint">Contracts this role can interact with</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Allowed Functions</label>
+          <div class="chip-input">
+            <span class="chip">swap() <button class="chip-remove">&times;</button></span>
+            <span class="chip">exactInputSingle() <button class="chip-remove">&times;</button></span>
+            <button class="chip-add">+ Add Function</button>
+          </div>
+          <div class="form-hint">Use * for wildcard (all functions)</div>
+        </div>
+
+        <div class="section-title" style="margin-top: 24px;">Spending Limits</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Per-Transaction Limit</label>
+            <input class="form-input" type="text" placeholder="e.g., $100,000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Daily Aggregate Limit</label>
+            <input class="form-input" type="text" placeholder="e.g., $500,000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Weekly Limit (Optional)</label>
+            <input class="form-input" type="text" placeholder="e.g., $2,000,000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Limit Reset Time</label>
+            <select class="form-select">
+              <option>00:00 UTC</option>
+              <option>06:00 UTC</option>
+              <option>12:00 UTC</option>
+              <option>18:00 UTC</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top: 24px;">Recipient Restrictions</div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Restrict to whitelisted recipients only</span>
+          <div class="toggle" onclick="this.classList.toggle('active'); document.getElementById('recipientWhitelist').style.display = this.classList.contains('active') ? 'block' : 'none'"></div>
+        </div>
+
+        <div id="recipientWhitelist" class="form-group" style="display: none; margin-top: 16px;">
+          <label class="form-label">Whitelisted Recipients</label>
+          <div class="chip-input">
+            <button class="chip-add">+ Add Recipient</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('addRoleModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createRole()">Create Role</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Sanction Modal -->
+  <div id="addSanctionModal" class="modal-overlay" onclick="if(event.target===this)closeModal('addSanctionModal')">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <span class="modal-title">Add Sanctioned Address</span>
+        <button class="modal-close" onclick="closeModal('addSanctionModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input class="form-input" type="text" placeholder="0x..." style="font-family: monospace;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason</label>
+          <select class="form-select">
+            <option>OFAC SDN List</option>
+            <option>Internal Blocklist - Suspected Fraud</option>
+            <option>Internal Blocklist - Policy Violation</option>
+            <option>Chainalysis Alert</option>
+            <option>Custom Reason</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-textarea" placeholder="Additional context..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('addSanctionModal')">Cancel</button>
+        <button class="btn btn-danger">Block Address</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Countdown timer simulation
+    let countdownData = [
+      { id: 'countdown1', seconds: 9912 },
+      { id: 'countdown2', seconds: 14327 }
+    ];
+
+    function updateCountdowns() {
+      countdownData.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (el) {
+          c.seconds--;
+          if (c.seconds < 0) c.seconds = 14400;
+          const h = Math.floor(c.seconds / 3600);
+          const m = Math.floor((c.seconds % 3600) / 60);
+          const s = c.seconds % 60;
+          el.textContent = `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+      });
+    }
+    setInterval(updateCountdowns, 1000);
+
+    // Modal functions
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    // Demo: Add member chip
+    function addMemberChip() {
+      const addr = prompt('Enter member address:');
+      if (addr && addr.startsWith('0x')) {
+        const container = document.getElementById('memberChips');
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.innerHTML = `${addr.slice(0,6)}...${addr.slice(-4)} <button class="chip-remove" onclick="this.parentElement.remove()">&times;</button>`;
+        container.insertBefore(chip, container.lastElementChild);
+      }
+    }
+
+    // Demo: Create role (mock)
+    function createRole() {
+      alert('Role created successfully! (Demo)');
+      closeModal('addRoleModal');
+    }
+  </script>
+</body>
+</html>

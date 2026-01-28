@@ -1,0 +1,12 @@
+[submodule "lib/safe-smart-account"]
+	path = lib/safe-smart-account
+	url = https://github.com/safe-global/safe-smart-account
+[submodule "lib/zodiac"]
+	path = lib/zodiac
+	url = https://github.com/gnosisguild/zodiac
+[submodule "lib/zodiac-modifier-roles"]
+	path = lib/zodiac-modifier-roles
+	url = https://github.com/gnosisguild/zodiac-modifier-roles
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
